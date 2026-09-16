@@ -1,0 +1,29 @@
+{
+  "name": "legal-wellness-live-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "build": "npm run verify:origin && npm test && npm run typecheck && npm run build:next",
+    "build:next": "next build",
+    "dev": "next dev",
+    "start": "next start",
+    "test": "node --experimental-strip-types --test tests/contact-validation.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "verify:origin": "node scripts/verify-approved-origin.mjs"
+  },
+  "dependencies": {
+    "next": "16.3.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "resend": "6.28.1"
+  },
+  "devDependencies": {
+    "@netlify/functions": "6.0.0",
+    "@types/node": "24.3.1",
+    "@types/react": "19.1.12",
+    "typescript": "5.9.2"
+  }
+}
