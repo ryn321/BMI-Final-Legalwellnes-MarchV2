@@ -1,8 +1,3 @@
-import {
-  isTemporarilyUnpublishedArticlePath,
-  transformApprovedOriginContent,
-} from "../../lib/proxy-content";
-
 const APPROVED_ORIGIN = "https://legal-wellness-master-final.netlify.app";
 
 export const dynamic = "force-dynamic";
@@ -25,14 +20,15 @@ const hopByHopHeaders = [
   "upgrade",
 ];
 
+const consentNotice = "By selecting Submit Request, you acknowledge that your required ID number and legal enquiry will be processed by Legal Wellness (Bornman Marlow Inc.), Netlify and Resend for client identification, assessment and follow-up. If you do not provide the required details, this consultation request cannot be submitted. Read the";
+const serverSubmitMarker = ">Submit Request</button></form>";
+const serverSubmitWithConsent = `>Submit Request</button><p class="text-xs text-muted-foreground text-center mt-3">${consentNotice} <a href="/privacy" target="_blank" rel="noopener noreferrer" class="underline">Privacy Notice</a>.</p></form>`;
+const clientSubmitMarker = '"Submit Request"})]})]})';
+const clientSubmitWithConsent = `"Submit Request"}),(0,A.jsxs)("p",{className:"text-xs text-muted-foreground text-center mt-3",children:["${consentNotice} ",(0,A.jsx)("a",{href:"/privacy",target:"_blank",rel:"noopener noreferrer",className:"underline",children:"Privacy Notice"}),"."]})]})]})`;
+
 async function proxy(request: Request, context: RouteContext): Promise<Response> {
   const { path = [] } = await context.params;
   const incomingUrl = new URL(request.url);
-  const method = request.method.toUpperCase();
-  if ((method === "GET" || method === "HEAD")
-      && isTemporarilyUnpublishedArticlePath(incomingUrl.pathname)) {
-    return Response.redirect(new URL("/news", incomingUrl), 307);
-  }
   const upstreamUrl = new URL(`/${path.map(encodeURIComponent).join("/")}`, APPROVED_ORIGIN);
   upstreamUrl.search = incomingUrl.search;
 
@@ -48,6 +44,7 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
     "x-forwarded-proto",
   ]) requestHeaders.delete(header);
 
+  const method = request.method.toUpperCase();
   const body = method === "GET" || method === "HEAD" ? undefined : await request.arrayBuffer();
   const upstreamResponse = await fetch(upstreamUrl, {
     method,
@@ -71,7 +68,7 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
   let bodyModified = false;
   if (method !== "HEAD" && contentType.toLowerCase().includes("text/html")) {
     const html = await upstreamResponse.text();
-    const transformed = transformApprovedOriginContent(html, contentType);
+    const transformed = html.replace(serverSubmitMarker, serverSubmitWithConsent);
     responseBody = transformed;
     bodyModified = transformed !== html;
   } else if (
@@ -79,7 +76,7 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
     (contentType.toLowerCase().includes("javascript") || incomingUrl.pathname.endsWith(".js"))
   ) {
     const script = await upstreamResponse.text();
-    const transformed = transformApprovedOriginContent(script, contentType);
+    const transformed = script.replace(clientSubmitMarker, clientSubmitWithConsent);
     responseBody = transformed;
     bodyModified = transformed !== script;
   }
