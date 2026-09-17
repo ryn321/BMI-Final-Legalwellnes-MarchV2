@@ -1,5 +1,3 @@
-import { injectLegalUpdatesPolicy, isHiddenArticlePath } from "../../lib/legal-updates-policy.mjs";
-
 const APPROVED_ORIGIN = "https://legal-wellness-master-final.netlify.app";
 
 export const dynamic = "force-dynamic";
@@ -28,33 +26,9 @@ const serverSubmitWithConsent = `>Submit Request</button><p class="text-xs text-
 const clientSubmitMarker = '"Submit Request"})]})]})';
 const clientSubmitWithConsent = `"Submit Request"}),(0,A.jsxs)("p",{className:"text-xs text-muted-foreground text-center mt-3",children:["${consentNotice} ",(0,A.jsx)("a",{href:"/privacy",target:"_blank",rel:"noopener noreferrer",className:"underline",children:"Privacy Notice"}),"."]})]})]})`;
 
-function safelyDecodePathname(pathname: string): string {
-  try {
-    return decodeURIComponent(pathname);
-  } catch {
-    return pathname;
-  }
-}
-
 async function proxy(request: Request, context: RouteContext): Promise<Response> {
   const { path = [] } = await context.params;
   const incomingUrl = new URL(request.url);
-  const method = request.method.toUpperCase();
-  const decodedPathname = safelyDecodePathname(incomingUrl.pathname);
-  const routeParamPathname = `/${path.join("/")}`;
-  const hiddenArticleRequested = (
-    isHiddenArticlePath(decodedPathname) || isHiddenArticlePath(routeParamPathname)
-  );
-  if ((method === "GET" || method === "HEAD") && hiddenArticleRequested) {
-    return new Response(null, {
-      status: 307,
-      headers: {
-        location: new URL("/news", incomingUrl.origin).toString(),
-        "x-legal-wellness-origin": "approved-netlify-build",
-      },
-    });
-  }
-
   const upstreamUrl = new URL(`/${path.map(encodeURIComponent).join("/")}`, APPROVED_ORIGIN);
   upstreamUrl.search = incomingUrl.search;
 
@@ -70,6 +44,7 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
     "x-forwarded-proto",
   ]) requestHeaders.delete(header);
 
+  const method = request.method.toUpperCase();
   const body = method === "GET" || method === "HEAD" ? undefined : await request.arrayBuffer();
   const upstreamResponse = await fetch(upstreamUrl, {
     method,
@@ -93,9 +68,7 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
   let bodyModified = false;
   if (method !== "HEAD" && contentType.toLowerCase().includes("text/html")) {
     const html = await upstreamResponse.text();
-    const withConsent = html.replace(serverSubmitMarker, serverSubmitWithConsent);
-    const policyResult = injectLegalUpdatesPolicy(withConsent);
-    const transformed = policyResult.html;
+    const transformed = html.replace(serverSubmitMarker, serverSubmitWithConsent);
     responseBody = transformed;
     bodyModified = transformed !== html;
   } else if (
