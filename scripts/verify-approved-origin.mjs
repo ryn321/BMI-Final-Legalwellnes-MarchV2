@@ -29,7 +29,10 @@ for (const marker of [serverNewsletterBlock, serverGuidanceSection]) {
   if (!newsHtml.includes(marker)) throw new Error(`Approved-origin news marker missing: ${marker}`);
 }
 
-const chunkPaths = [...new Set(html.match(/\/_next\/static\/chunks\/[A-Za-z0-9._-]+\.js/g) ?? [])];
+const chunkPaths = [...new Set([
+  ...(html.match(/\/_next\/static\/chunks\/[A-Za-z0-9._-]+\.js/g) ?? []),
+  ...(newsHtml.match(/\/_next\/static\/chunks\/[A-Za-z0-9._-]+\.js/g) ?? []),
+])];
 let clientMarkerCount = 0;
 let clientSubmitMarkerCount = 0;
 let clientNewsletterMarkerCount = 0;
@@ -66,3 +69,4 @@ console.log(JSON.stringify({
   clientGuidanceMarkerCount,
   status: "verified",
 }));
+Check Legal Updates client bundles
