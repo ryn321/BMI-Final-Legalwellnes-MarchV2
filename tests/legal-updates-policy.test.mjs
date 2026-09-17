@@ -37,6 +37,15 @@ test("generates a narrowly scoped pre-paint style and post-load bootstrap", () =
   assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /addEventListener\("load"/);
   assert.equal((policy.LEGAL_UPDATES_BOOTSTRAP.match(/requestAnimationFrame/g) ?? []).length >= 2, true);
   assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /CSS\.supports\("selector\(:has\(\*\)\)"\)/);
+  assert.match(policy.LEGAL_UPDATES_STYLE, /grid-template-columns:\s*repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /\/news\/small-claims-court-limit-2026/);
+  assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /Small Claims Court Limit Increased to R30 000/);
+  assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /Civil Claims/);
+  assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /17 September 2026/);
+  assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /Legal Wellness/);
+  assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /data-lw-small-claims-card/);
+  assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /location\.assign/);
+  assert.match(policy.LEGAL_UPDATES_BOOTSTRAP, /MutationObserver/);
   assert.doesNotMatch(policy.LEGAL_UPDATES_BOOTSTRAP, /Submit Request|consultation-idNumber/);
 });
 
@@ -117,7 +126,8 @@ test("bootstrap waits for load and two frames without modern DOM mutation", () =
   fixture.rafQueue.shift()();
   assert.equal(fixture.rafQueue.length, 1);
   fixture.rafQueue.shift()();
-  assert.equal(fixture.mutationObservers.length, 0);
+  assert.equal(fixture.mutationObservers.length, 1);
+  assert.equal(fixture.mutationObservers[0].observing, true);
   assert.equal(fixture.appended.length, 0);
 });
 

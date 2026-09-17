@@ -21,7 +21,9 @@ RETAINED_HEADINGS = [
     "Labour Procedures",
     "Divorce Procedures",
     "Wills & Estate-Related Matters",
+    "Small Claims Court Limit Increased to R30 000",
 ]
+NEW_ARTICLE_HEADING = "Small Claims Court Limit Increased to R30 000"
 
 
 def fail(message):
@@ -55,6 +57,10 @@ def attach_errors(page):
 
 def assert_clean_news(page, errors, label):
     wait_two_frames(page)
+    page.get_by_role("heading", name=NEW_ARTICLE_HEADING, exact=True).wait_for(
+        state="visible", timeout=5_000
+    )
+    page.wait_for_timeout(250)
     if page.get_by_role("heading", name="Click on Newsletter", exact=True).count() != 0:
         fail(f"{label}: newsletter heading remains role-visible")
     if page.get_by_role("link", name="Click here for more information", exact=True).count() != 0:
@@ -119,6 +125,7 @@ def main():
                 context, page, errors = new_page(browser)
                 page.goto(f"{base_url}/news", wait_until="load")
                 wait_two_frames(page)
+                page.wait_for_timeout(1_000)
                 anchor = page.locator(f'a[href="{path}"]')
                 if anchor.count() != 1:
                     fail(f"hidden-click {path}: expected one hydrated anchor")
@@ -144,6 +151,7 @@ def main():
             context, page, errors = new_page(browser)
             page.goto(f"{base_url}/news", wait_until="load")
             wait_two_frames(page)
+            page.wait_for_timeout(1_000)
             page.locator(f'a[href="{HIDDEN_PATHS[0]}"]').evaluate(
                 """element => {
                     const card = element.closest('div.group.relative.border.border-border.rounded-2xl');
