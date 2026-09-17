@@ -69,4 +69,3 @@ console.log(JSON.stringify({
   clientGuidanceMarkerCount,
   status: "verified",
 }));
-Check Legal Updates client bundles
