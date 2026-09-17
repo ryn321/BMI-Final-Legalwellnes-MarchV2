@@ -11,8 +11,9 @@
     "dev": "next dev",
     "start": "next start",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:coverage": "node --experimental-strip-types --test --experimental-test-coverage --test-coverage-include=lib/legal-updates-policy.mjs --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
-    "verify:origin": "node scripts/verify-approved-origin.mjs"
+    "verify:origin": "node --dns-result-order=ipv4first --no-network-family-autoselection scripts/verify-approved-origin.mjs"
   },
   "dependencies": {
     "next": "16.3.5",

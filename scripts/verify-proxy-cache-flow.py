@@ -118,7 +118,7 @@ def verify_http(base_origin):
     return records, known_conditional_defect, conditional_304_count
 
 
-def verify_browser(base_origin, require_visible_content):
+def verify_browser(base_origin, require_visible_content, content_mode):
     errors = []
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
@@ -135,12 +135,24 @@ def verify_browser(base_origin, require_visible_content):
             page.goto(f"{base_origin}/news", wait_until="load")
             page.wait_for_timeout(500)
             if require_visible_content:
-                if not page.get_by_role(
+                newsletter = page.get_by_role(
                     "heading", name="Click on Newsletter", exact=True
-                ).is_visible():
-                    fail("restored newsletter heading is not visible on first load")
-                if page.locator('a[href^="/news/"]:visible').count() != 9:
-                    fail("restored Legal Updates page does not show nine article links on first load")
+                )
+                visible_articles = page.locator('a[href^="/news/"]:visible').count()
+                if content_mode == "baseline":
+                    if not newsletter.is_visible():
+                        fail("restored newsletter heading is not visible on first load")
+                    if visible_articles != 9:
+                        fail("restored Legal Updates page does not show nine article links on first load")
+                else:
+                    if newsletter.count() != 0:
+                        fail("cleaned Legal Updates page exposes the newsletter heading")
+                    if page.get_by_role(
+                        "link", name="Click here for more information", exact=True
+                    ).count() != 0:
+                        fail("cleaned Legal Updates page exposes the newsletter information link")
+                    if visible_articles != 3:
+                        fail(f"cleaned Legal Updates page shows {visible_articles} visible article links instead of three")
 
             page.reload(wait_until="load")
             page.wait_for_timeout(500)
@@ -152,12 +164,13 @@ def verify_browser(base_origin, require_visible_content):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--expect", choices=["defect", "healthy"], required=True)
+    parser.add_argument("--content", choices=["baseline", "cleaned"], default="baseline")
     parser.add_argument("base_origin")
     args = parser.parse_args()
     base_origin = validate_origin(args.base_origin)
 
     records, conditional_defect, conditional_304_count = verify_http(base_origin)
-    browser_errors = verify_browser(base_origin, args.expect == "healthy")
+    browser_errors = verify_browser(base_origin, args.expect == "healthy", args.content)
     known_browser_defect = any(
         "500" in error
         or "MIME type" in error
@@ -199,6 +212,7 @@ def main():
     print(json.dumps({
         "baseOrigin": base_origin,
         "expected": args.expect,
+        "content": args.content,
         "chunkCount": len(records),
         "conditional304Count": conditional_304_count,
         "browserErrorCount": len(browser_errors),
