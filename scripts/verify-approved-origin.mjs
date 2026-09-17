@@ -17,10 +17,16 @@ for (const marker of [
   "mailto:client@legalwellness.co.za",
   serverIdField,
   serverSubmitMarker,
-  serverNewsletterBlock,
-  serverGuidanceSection,
 ]) {
   if (!html.includes(marker)) throw new Error(`Approved-origin marker missing: ${marker}`);
+}
+
+const newsResponse = await fetch(new URL("/news", origin), { redirect: "error" });
+if (!newsResponse.ok) throw new Error(`Approved-origin news page returned HTTP ${newsResponse.status}`);
+
+const newsHtml = await newsResponse.text();
+for (const marker of [serverNewsletterBlock, serverGuidanceSection]) {
+  if (!newsHtml.includes(marker)) throw new Error(`Approved-origin news marker missing: ${marker}`);
 }
 
 const chunkPaths = [...new Set(html.match(/\/_next\/static\/chunks\/[A-Za-z0-9._-]+\.js/g) ?? [])];
