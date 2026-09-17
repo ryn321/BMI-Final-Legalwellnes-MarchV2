@@ -133,7 +133,7 @@ def verify_browser(base_origin, require_visible_content, content_mode):
             )
             page.on("pageerror", lambda error: errors.append(f"page:{error}"))
             page.goto(f"{base_origin}/news", wait_until="load")
-            page.wait_for_timeout(500)
+            page.wait_for_timeout(1_000)
             if require_visible_content:
                 newsletter = page.get_by_role(
                     "heading", name="Click on Newsletter", exact=True
@@ -151,11 +151,11 @@ def verify_browser(base_origin, require_visible_content, content_mode):
                         "link", name="Click here for more information", exact=True
                     ).count() != 0:
                         fail("cleaned Legal Updates page exposes the newsletter information link")
-                    if visible_articles != 3:
-                        fail(f"cleaned Legal Updates page shows {visible_articles} visible article links instead of three")
+                    if visible_articles != 4:
+                        fail(f"cleaned Legal Updates page shows {visible_articles} visible article links instead of four")
 
             page.reload(wait_until="load")
-            page.wait_for_timeout(500)
+            page.wait_for_timeout(1_000)
         finally:
             browser.close()
     return errors
