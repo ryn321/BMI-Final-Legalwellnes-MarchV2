@@ -64,15 +64,18 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
   responseHeaders.set("x-legal-wellness-origin", "approved-netlify-build");
 
   const contentType = upstreamResponse.headers.get("content-type") ?? "";
-  let responseBody: BodyInit | null = method === "HEAD" ? null : upstreamResponse.body;
+  const responseMayHaveBody = (
+    method !== "HEAD" && ![204, 205, 304].includes(upstreamResponse.status)
+  );
+  let responseBody: BodyInit | null = responseMayHaveBody ? upstreamResponse.body : null;
   let bodyModified = false;
-  if (method !== "HEAD" && contentType.toLowerCase().includes("text/html")) {
+  if (responseMayHaveBody && contentType.toLowerCase().includes("text/html")) {
     const html = await upstreamResponse.text();
     const transformed = html.replace(serverSubmitMarker, serverSubmitWithConsent);
     responseBody = transformed;
     bodyModified = transformed !== html;
   } else if (
-    method !== "HEAD" &&
+    responseMayHaveBody &&
     (contentType.toLowerCase().includes("javascript") || incomingUrl.pathname.endsWith(".js"))
   ) {
     const script = await upstreamResponse.text();
