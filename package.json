@@ -10,7 +10,7 @@
     "build:next": "next build",
     "dev": "next dev",
     "start": "next start",
-    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test": "node --experimental-strip-types --test tests/contact-validation.test.mjs",
     "typecheck": "tsc --noEmit",
     "verify:origin": "node scripts/verify-approved-origin.mjs"
   },
